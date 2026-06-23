@@ -40,7 +40,7 @@ export const Route = createFileRoute("/players/$id")({
 
 function PlayerProfile() {
   const { player } = Route.useLoaderData();
-  const statEntries = Object.entries(player.stats);
+  const statEntries = Object.entries(player.stats) as [string, number][];
 
   return (
     <div className="min-h-screen">
@@ -170,7 +170,7 @@ function PlayerProfile() {
 
           <TabsContent value="achievements" className="mt-6">
             <div className="grid gap-3 md:grid-cols-2">
-              {player.achievements.map((a, i) => (
+              {player.achievements.map((a: string, i: number) => (
                 <div key={i} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4">
                   <div className="grid h-10 w-10 place-items-center rounded-lg bg-gold/10 text-gold">
                     {i % 2 ? <Trophy className="h-5 w-5" /> : <Award className="h-5 w-5" />}
