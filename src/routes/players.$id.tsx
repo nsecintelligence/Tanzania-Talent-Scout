@@ -1,6 +1,9 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { SiteNav, SiteFooter } from "@/components/site-nav";
-import { PLAYERS } from "@/lib/mock-data";
+import { fetchPlayer } from "@/lib/api";
+import { useSession } from "@/lib/auth-store";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -9,37 +12,46 @@ import { BadgeCheck, MapPin, Share2, MessageSquare, Send, Brain, Award, Trophy }
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/players/$id")({
-  loader: ({ params }) => {
-    const player = PLAYERS.find((p) => p.id === params.id);
-    if (!player) throw notFound();
-    return { player };
-  },
-  head: ({ loaderData }) => ({
-    meta: [{ title: `${loaderData?.player.name ?? "Player"} — Tanzania Talent Scout` }],
-  }),
-  notFoundComponent: () => (
-    <div className="min-h-screen">
-      <SiteNav />
-      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
-        <h1 className="font-display text-3xl font-bold">Player not found</h1>
-        <Button asChild className="mt-6"><Link to="/discover">Back to discover</Link></Button>
-      </div>
-    </div>
-  ),
-  errorComponent: ({ reset }) => (
-    <div className="min-h-screen">
-      <SiteNav />
-      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
-        <h1 className="font-display text-3xl font-bold">Something went wrong</h1>
-        <Button onClick={reset} className="mt-6">Try again</Button>
-      </div>
-    </div>
-  ),
+  head: () => ({ meta: [{ title: "Player — Tanzania Talent Scout" }] }),
   component: PlayerProfile,
 });
 
 function PlayerProfile() {
-  const { player } = Route.useLoaderData();
+  const { id } = Route.useParams();
+  const session = useSession();
+  const { data: player, isLoading } = useQuery({
+    queryKey: ["player", id],
+    queryFn: () => fetchPlayer(id),
+  });
+
+  async function sendTrialInvite() {
+    if (!session) { toast.error("Sign in to send invites"); return; }
+    if (!player) return;
+    const { error } = await supabase.from("trial_invitations").insert({
+      player_id: player.id,
+      invited_by: session.user.id,
+      message: `Trial invitation for ${player.name}`,
+      status: "pending",
+    });
+    if (error) toast.error(error.message);
+    else toast.success("Trial invitation sent");
+  }
+
+  if (isLoading) {
+    return (<div className="min-h-screen"><SiteNav /><div className="mx-auto max-w-3xl px-4 py-20 text-center text-muted-foreground">Loading player…</div></div>);
+  }
+  if (!player) {
+    return (
+      <div className="min-h-screen">
+        <SiteNav />
+        <div className="mx-auto max-w-3xl px-4 py-20 text-center">
+          <h1 className="font-display text-3xl font-bold">Player not found</h1>
+          <Button asChild className="mt-6"><Link to="/discover">Back to discover</Link></Button>
+        </div>
+      </div>
+    );
+  }
+
   const statEntries = Object.entries(player.stats) as [string, number][];
 
   return (
@@ -81,15 +93,15 @@ function PlayerProfile() {
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Potential</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4 text-center">
-                <div className="font-display text-3xl font-bold">#{Math.floor(100 - player.rating / 2)}</div>
+                <div className="font-display text-3xl font-bold">#{Math.max(1, Math.floor(100 - player.rating / 2))}</div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Nat. rank</div>
               </div>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2">
-              <Button onClick={() => toast.success("Trial invitation sent")}><Send className="mr-1.5 h-4 w-4" />Send trial invite</Button>
+              <Button onClick={sendTrialInvite}><Send className="mr-1.5 h-4 w-4" />Send trial invite</Button>
               <Button variant="outline" onClick={() => toast.success("Message sent to coach")}><MessageSquare className="mr-1.5 h-4 w-4" />Contact coach</Button>
-              <Button variant="outline" onClick={() => toast.success("Profile link copied")}><Share2 className="mr-1.5 h-4 w-4" />Share</Button>
+              <Button variant="outline" onClick={() => { navigator.clipboard?.writeText(window.location.href); toast.success("Profile link copied"); }}><Share2 className="mr-1.5 h-4 w-4" />Share</Button>
             </div>
           </div>
         </div>
@@ -100,7 +112,6 @@ function PlayerProfile() {
           <TabsList>
             <TabsTrigger value="stats">Statistics</TabsTrigger>
             <TabsTrigger value="ai">AI Analysis</TabsTrigger>
-            <TabsTrigger value="videos">Videos</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
           </TabsList>
 
@@ -127,15 +138,14 @@ function PlayerProfile() {
                   <div className="text-xs font-semibold uppercase tracking-widest text-primary">Strengths</div>
                   <ul className="mt-3 space-y-2 text-sm">
                     <li>• Exceptional acceleration over first 5 meters</li>
-                    <li>• High passing accuracy under pressure (87%)</li>
+                    <li>• High passing accuracy under pressure</li>
                     <li>• Strong positional awareness in final third</li>
-                    <li>• Composed shooting from outside the box</li>
                   </ul>
                 </div>
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-widest text-destructive">To improve</div>
                   <ul className="mt-3 space-y-2 text-sm">
-                    <li>• Aerial duels — needs strength work</li>
+                    <li>• Aerial duels — strength work needed</li>
                     <li>• Off-ball defensive tracking</li>
                     <li>• Weak-foot finishing consistency</li>
                   </ul>
@@ -144,41 +154,27 @@ function PlayerProfile() {
               <div className="mt-6 rounded-lg border border-border/60 bg-card p-4">
                 <div className="text-xs uppercase tracking-widest text-muted-foreground">Summary</div>
                 <p className="mt-1 text-sm">
-                  Video analysis across 6 recent matches shows top-end pace of 32.4 km/h, average passing accuracy of 87% and shooting efficiency of 41%.
-                  Movement model classifies as a modern, vertical {player.position} with strong potential for top-flight football.
+                  Movement model classifies {player.name} as a modern, vertical {player.position} with strong potential ({player.potential}) for top-flight football.
                 </p>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="videos" className="mt-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              {[1,2,3].map((i) => (
-                <div key={i} className="overflow-hidden rounded-xl border border-border/60 bg-card">
-                  <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-gold/10">
-                    <div className="absolute inset-0 grid place-items-center text-primary">▶</div>
-                    <div className="absolute bottom-2 right-2 rounded bg-background/80 px-2 py-0.5 text-xs">3:42</div>
-                  </div>
-                  <div className="p-3">
-                    <div className="font-semibold">Match highlights #{i}</div>
-                    <div className="text-xs text-muted-foreground">vs Simba Youth · 1.2k views</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
-
           <TabsContent value="achievements" className="mt-6">
-            <div className="grid gap-3 md:grid-cols-2">
-              {player.achievements.map((a: string, i: number) => (
-                <div key={i} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4">
-                  <div className="grid h-10 w-10 place-items-center rounded-lg bg-gold/10 text-gold">
-                    {i % 2 ? <Trophy className="h-5 w-5" /> : <Award className="h-5 w-5" />}
+            {player.achievements.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">No achievements recorded yet.</div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {player.achievements.map((a: string, i: number) => (
+                  <div key={i} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4">
+                    <div className="grid h-10 w-10 place-items-center rounded-lg bg-gold/10 text-gold">
+                      {i % 2 ? <Trophy className="h-5 w-5" /> : <Award className="h-5 w-5" />}
+                    </div>
+                    <span className="font-medium">{a}</span>
                   </div>
-                  <span className="font-medium">{a}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

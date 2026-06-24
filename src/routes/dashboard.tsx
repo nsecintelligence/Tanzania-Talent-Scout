@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { SiteNav, SiteFooter } from "@/components/site-nav";
 import { useSession } from "@/lib/auth-store";
-import { PLAYERS, MESSAGES, NOTIFICATIONS, VIDEOS } from "@/lib/mock-data";
+import { fetchPlayers, fetchVideos } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -44,10 +45,15 @@ function Section({ title, action, children }: { title: string; action?: React.Re
 function Dashboard() {
   const session = useSession();
   const nav = useNavigate();
-  useEffect(() => { if (session === null && typeof window !== "undefined") {
-    const t = setTimeout(() => { if (!localStorage.getItem("tts_auth")) nav({ to: "/auth" }); }, 50);
-    return () => clearTimeout(t);
-  } }, [session, nav]);
+  useEffect(() => {
+    if (session === null) {
+      const t = setTimeout(() => {
+        // give auth-store a beat to hydrate, then redirect if still empty
+        if (!sessionStorageHasUser()) nav({ to: "/auth" });
+      }, 400);
+      return () => clearTimeout(t);
+    }
+  }, [session, nav]);
 
   if (!session) {
     return (
@@ -69,6 +75,7 @@ function Dashboard() {
           <div>
             <div className="text-xs uppercase tracking-widest text-primary">{session.role} dashboard</div>
             <h1 className="font-display text-4xl font-bold">Karibu, {session.name.split(" ")[0]} 👋</h1>
+            <div className="mt-1 text-xs text-muted-foreground">User ID: <code className="rounded bg-secondary px-1.5 py-0.5">{session.user.id}</code></div>
           </div>
           <Badge className="bg-primary/15 text-primary border border-primary/30">
             <ShieldCheck className="mr-1 h-3 w-3" /> Account active
@@ -87,8 +94,19 @@ function Dashboard() {
   );
 }
 
+function sessionStorageHasUser() {
+  if (typeof window === "undefined") return false;
+  // supabase persists session under sb-<ref>-auth-token
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith("sb-") && k.endsWith("-auth-token")) return true;
+  }
+  return false;
+}
+
 function PlayerDash() {
   const stats = { pace: 84, shooting: 78, passing: 81, dribbling: 85, defense: 52, physical: 74 };
+  const { data: videos = [] } = useQuery({ queryKey: ["videos"], queryFn: fetchVideos });
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-4">
@@ -116,44 +134,49 @@ function PlayerDash() {
         </div>
         <Section title="Notifications" action={<Bell className="h-4 w-4 text-muted-foreground" />}>
           <ul className="space-y-3 text-sm">
-            {NOTIFICATIONS.map((n) => (
-              <li key={n.id} className="flex justify-between gap-3 border-b border-border/40 pb-2 last:border-0">
-                <span>{n.text}</span>
-                <span className="text-xs text-muted-foreground">{n.time}</span>
-              </li>
-            ))}
+            <li className="flex justify-between gap-3 border-b border-border/40 pb-2">
+              <span>Welcome to Tanzania Talent Scout!</span><span className="text-xs text-muted-foreground">now</span>
+            </li>
+            <li className="flex justify-between gap-3 border-b border-border/40 pb-2">
+              <span>Complete your profile to be discovered.</span><span className="text-xs text-muted-foreground">1m</span>
+            </li>
           </ul>
         </Section>
       </div>
 
-      <Section title="Your videos" action={<Button size="sm"><Plus className="mr-1 h-4 w-4" />Upload</Button>}>
-        <div className="grid gap-4 md:grid-cols-3">
-          {VIDEOS.slice(0, 3).map((v) => (
-            <div key={v.id} className="overflow-hidden rounded-lg border border-border/60">
-              <div className="aspect-video bg-gradient-to-br from-primary/20 to-gold/10 grid place-items-center text-primary">▶</div>
-              <div className="p-3"><div className="text-sm font-semibold">{v.title}</div><div className="text-xs text-muted-foreground">{v.views} views</div></div>
-            </div>
-          ))}
-        </div>
+      <Section title="Recent videos" action={<Button size="sm" asChild><Link to="/videos"><Plus className="mr-1 h-4 w-4" />Upload</Link></Button>}>
+        {videos.length === 0 ? (
+          <div className="text-sm text-muted-foreground">No videos uploaded yet.</div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-3">
+            {videos.slice(0, 3).map((v) => (
+              <div key={v.id} className="overflow-hidden rounded-lg border border-border/60">
+                <div className="aspect-video bg-gradient-to-br from-primary/20 to-gold/10 grid place-items-center text-primary">▶</div>
+                <div className="p-3"><div className="text-sm font-semibold">{v.title}</div><div className="text-xs text-muted-foreground">{v.views} views</div></div>
+              </div>
+            ))}
+          </div>
+        )}
       </Section>
     </div>
   );
 }
 
 function CoachDash() {
+  const { data: players = [] } = useQuery({ queryKey: ["players"], queryFn: fetchPlayers });
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat icon={Users} label="Players" value="34" />
-        <Stat icon={Video} label="Videos uploaded" value="58" />
-        <Stat icon={MessageSquare} label="Scout inquiries" value="12" trend="+3" />
-        <Stat icon={Trophy} label="Verified" value="Yes" />
+        <Stat icon={Users} label="Players" value={String(players.length)} />
+        <Stat icon={Video} label="Videos uploaded" value="—" />
+        <Stat icon={MessageSquare} label="Scout inquiries" value="0" />
+        <Stat icon={Trophy} label="Verified" value="Pending" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Section title="My squad" action={<Button size="sm"><Plus className="mr-1 h-4 w-4" />Add player</Button>}>
+        <Section title="Squad" action={<Button size="sm"><Plus className="mr-1 h-4 w-4" />Add player</Button>}>
           <ul className="space-y-2">
-            {PLAYERS.slice(0, 6).map((p) => (
+            {players.slice(0, 6).map((p) => (
               <li key={p.id} className="flex items-center justify-between rounded-lg p-2 hover:bg-accent/30">
                 <Link to="/players/$id" params={{ id: p.id }} className="flex items-center gap-3">
                   <img src={p.photo} alt="" className="h-9 w-9 rounded-full object-cover" />
@@ -168,22 +191,14 @@ function CoachDash() {
           </ul>
         </Section>
 
-        <Section title="Scout inquiries">
-          <ul className="space-y-3">
-            {MESSAGES.map((m) => (
-              <li key={m.id} className="rounded-lg border border-border/40 p-3">
-                <div className="flex justify-between"><span className="text-sm font-semibold">{m.from}</span><span className="text-xs text-muted-foreground">{m.time}</span></div>
-                <div className="text-sm text-muted-foreground">{m.preview}</div>
-              </li>
-            ))}
-          </ul>
+        <Section title="Inbox">
+          <Button variant="outline" className="w-full" asChild><Link to="/messages">Open messages</Link></Button>
         </Section>
 
         <Section title="Quick actions">
           <div className="grid gap-2">
-            <Button variant="outline" className="justify-start"><Video className="mr-2 h-4 w-4" />Upload match video</Button>
-            <Button variant="outline" className="justify-start"><Video className="mr-2 h-4 w-4" />Upload training video</Button>
-            <Button variant="outline" className="justify-start"><Plus className="mr-2 h-4 w-4" />Enter player statistics</Button>
+            <Button variant="outline" className="justify-start" asChild><Link to="/videos"><Video className="mr-2 h-4 w-4" />Upload video</Link></Button>
+            <Button variant="outline" className="justify-start" asChild><Link to="/discover"><Search className="mr-2 h-4 w-4" />Browse talent</Link></Button>
             <Button variant="outline" className="justify-start"><Brain className="mr-2 h-4 w-4" />Request AI analysis</Button>
           </div>
         </Section>
@@ -193,18 +208,19 @@ function CoachDash() {
 }
 
 function ScoutDash() {
+  const { data: players = [] } = useQuery({ queryKey: ["players"], queryFn: fetchPlayers });
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat icon={Search} label="Searches" value="248" />
-        <Stat icon={Star} label="Saved players" value="19" />
-        <Stat icon={Send} label="Trials requested" value="6" />
-        <Stat icon={MessageSquare} label="Conversations" value="11" />
+        <Stat icon={Search} label="Searches" value="0" />
+        <Stat icon={Star} label="Saved players" value="0" />
+        <Stat icon={Send} label="Trials requested" value="0" />
+        <Stat icon={MessageSquare} label="Conversations" value="0" />
       </div>
 
-      <Section title="Recommended for you" action={<Button size="sm" variant="ghost" asChild><Link to="/discover">View all</Link></Button>}>
+      <Section title="Top players right now" action={<Button size="sm" variant="ghost" asChild><Link to="/discover">View all</Link></Button>}>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-          {PLAYERS.slice(0, 4).map((p) => (
+          {players.slice(0, 4).map((p) => (
             <Link key={p.id} to="/players/$id" params={{ id: p.id }} className="rounded-lg border border-border/60 p-3 hover:border-primary/60">
               <img src={p.photo} alt="" className="aspect-square w-full rounded-md object-cover" />
               <div className="mt-2 text-sm font-semibold">{p.name}</div>
@@ -219,37 +235,28 @@ function ScoutDash() {
 }
 
 function ClubDash() {
+  const { data: players = [] } = useQuery({ queryKey: ["players"], queryFn: fetchPlayers });
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat icon={Users} label="Recruitment pipeline" value="14" />
-        <Stat icon={Send} label="Trial invites" value="8" />
-        <Stat icon={Trophy} label="Signings YTD" value="3" />
-        <Stat icon={Star} label="Watchlist" value="32" />
+        <Stat icon={Users} label="Pipeline" value="0" />
+        <Stat icon={Send} label="Trial invites" value="0" />
+        <Stat icon={Trophy} label="Signings YTD" value="0" />
+        <Stat icon={Star} label="Watchlist" value="0" />
       </div>
 
-      <Section title="Pipeline">
-        <div className="grid gap-4 md:grid-cols-4">
-          {["Scouting", "Trial invited", "Trial completed", "Offer"].map((stage, i) => (
-            <div key={stage} className="rounded-xl border border-border/60 bg-secondary/30 p-3">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{stage}</span>
-                <Badge variant="outline">{4 - i}</Badge>
+      <Section title="Top targets">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          {players.slice(0, 8).map((p) => (
+            <Link key={p.id} to="/players/$id" params={{ id: p.id }} className="rounded-lg border border-border/60 p-3 hover:border-primary/60">
+              <div className="flex items-center gap-2">
+                <img src={p.photo} alt="" className="h-9 w-9 rounded-full object-cover" />
+                <div className="text-xs">
+                  <div className="font-semibold">{p.name}</div>
+                  <div className="text-muted-foreground">{p.position} · {p.rating}</div>
+                </div>
               </div>
-              <div className="space-y-2">
-                {PLAYERS.slice(i * 2, i * 2 + (4 - i)).map((p) => (
-                  <Link key={p.id} to="/players/$id" params={{ id: p.id }} className="block rounded-md border border-border/60 bg-card p-2 hover:border-primary/60">
-                    <div className="flex items-center gap-2">
-                      <img src={p.photo} alt="" className="h-7 w-7 rounded-full object-cover" />
-                      <div className="text-xs">
-                        <div className="font-semibold">{p.name}</div>
-                        <div className="text-muted-foreground">{p.position}</div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
       </Section>
@@ -258,17 +265,18 @@ function ClubDash() {
 }
 
 function AdminDash() {
+  const { data: players = [] } = useQuery({ queryKey: ["players"], queryFn: fetchPlayers });
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat icon={Users} label="Total users" value="2,431" trend="+124" />
-        <Stat icon={ShieldCheck} label="Pending verifications" value="18" />
-        <Stat icon={Video} label="Videos this week" value="412" />
-        <Stat icon={Trophy} label="Active clubs" value="47" />
+        <Stat icon={Users} label="Total players" value={String(players.length)} />
+        <Stat icon={ShieldCheck} label="Pending verifications" value={String(players.filter(p => !p.verified).length)} />
+        <Stat icon={Video} label="Videos" value="—" />
+        <Stat icon={Trophy} label="Active clubs" value="—" />
       </div>
       <Section title="Pending verifications">
         <ul className="divide-y divide-border/60">
-          {PLAYERS.slice(0, 5).map((p) => (
+          {players.filter(p => !p.verified).slice(0, 6).map((p) => (
             <li key={p.id} className="flex items-center justify-between py-3">
               <div className="flex items-center gap-3">
                 <img src={p.photo} alt="" className="h-9 w-9 rounded-full object-cover" />

@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { SiteNav, SiteFooter } from "@/components/site-nav";
 import { PlayerCard } from "@/components/player-card";
-import { PLAYERS } from "@/lib/mock-data";
+import { fetchPlayers } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -23,13 +24,18 @@ function Discover() {
   const [age, setAge] = useState<[number, number]>([15, 30]);
   const [minRating, setMinRating] = useState(60);
 
-  const results = useMemo(() => PLAYERS.filter((p) =>
+  const { data: players = [], isLoading } = useQuery({
+    queryKey: ["players"],
+    queryFn: fetchPlayers,
+  });
+
+  const results = useMemo(() => players.filter((p) =>
     (!q || p.name.toLowerCase().includes(q.toLowerCase())) &&
     (pos === "All" || p.position === pos) &&
     (region === "All" || p.region === region) &&
     p.age >= age[0] && p.age <= age[1] &&
     p.rating >= minRating
-  ), [q, pos, region, age, minRating]);
+  ), [players, q, pos, region, age, minRating]);
 
   return (
     <div className="min-h-screen">
@@ -74,8 +80,10 @@ function Discover() {
           </aside>
 
           <div>
-            <div className="mb-4 text-sm text-muted-foreground">{results.length} player{results.length !== 1 && "s"} found</div>
-            {results.length === 0 ? (
+            <div className="mb-4 text-sm text-muted-foreground">
+              {isLoading ? "Loading…" : `${results.length} player${results.length !== 1 ? "s" : ""} found`}
+            </div>
+            {!isLoading && results.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
                 No players match your filters. <Link to="/discover" className="text-primary">Reset</Link>
               </div>

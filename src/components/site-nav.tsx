@@ -4,17 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Trophy, Menu, X } from "lucide-react";
 import { useState } from "react";
 
+const links = [
+  { to: "/discover", label: "Discover" },
+  { to: "/academies", label: "Academies" },
+  { to: "/videos", label: "Videos" },
+  { to: "/rankings", label: "Rankings" },
+  { to: "/messages", label: "Messages" },
+  { to: "/dashboard", label: "Dashboard" },
+] as const;
+
 export function SiteNav() {
   const session = useSession();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
-
-  const links = [
-    { to: "/discover", label: "Discover" },
-    { to: "/videos", label: "Videos" },
-    { to: "/rankings", label: "Rankings" },
-    { to: "/dashboard", label: "Dashboard" },
-  ] as const;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
@@ -29,7 +31,7 @@ export function SiteNav() {
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           {links.map((l) => (
             <Link
               key={l.to}
@@ -49,7 +51,7 @@ export function SiteNav() {
                 <div className="font-medium text-foreground">{session.name}</div>
                 <div className="text-muted-foreground capitalize">{session.role}</div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => { signOut(); nav({ to: "/" }); }}>
+              <Button variant="outline" size="sm" onClick={async () => { await signOut(); nav({ to: "/" }); }}>
                 Sign out
               </Button>
             </>
@@ -61,24 +63,23 @@ export function SiteNav() {
           )}
         </div>
 
-        <button className="md:hidden" onClick={() => setOpen(!open)} aria-label="menu">
+        <button className="lg:hidden" onClick={() => setOpen(!open)} aria-label="menu">
           {open ? <X /> : <Menu />}
         </button>
       </div>
 
       {open && (
-        <div className="border-t border-border/60 md:hidden">
+        <div className="border-t border-border/60 lg:hidden">
           <div className="flex flex-col gap-1 p-4">
             {links.map((l) => (
               <Link key={l.to} to={l.to} onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm hover:bg-accent">
                 {l.label}
               </Link>
             ))}
-            {!session && (
+            {!session ? (
               <Button className="mt-2" onClick={() => { setOpen(false); nav({ to: "/auth" }); }}>Sign in / Join</Button>
-            )}
-            {session && (
-              <Button variant="outline" className="mt-2" onClick={() => { signOut(); setOpen(false); nav({ to: "/" }); }}>
+            ) : (
+              <Button variant="outline" className="mt-2" onClick={async () => { await signOut(); setOpen(false); nav({ to: "/" }); }}>
                 Sign out
               </Button>
             )}
@@ -108,6 +109,7 @@ export function SiteFooter() {
           <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Platform</div>
           <ul className="mt-3 space-y-2 text-sm">
             <li><Link to="/discover" className="hover:text-primary">Discover players</Link></li>
+            <li><Link to="/academies" className="hover:text-primary">Academies</Link></li>
             <li><Link to="/videos" className="hover:text-primary">Videos</Link></li>
             <li><Link to="/rankings" className="hover:text-primary">Rankings</Link></li>
           </ul>

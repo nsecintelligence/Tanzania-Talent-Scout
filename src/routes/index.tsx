@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { SiteNav, SiteFooter } from "@/components/site-nav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlayerCard } from "@/components/player-card";
-import { PLAYERS } from "@/lib/mock-data";
+import { fetchPlayers } from "@/lib/api";
 import { ArrowRight, Brain, Search, Trophy, Video, Users, Sparkles, ShieldCheck } from "lucide-react";
 import hero from "@/assets/hero.jpg";
 
@@ -18,12 +19,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const featured = PLAYERS.slice(0, 8);
+  const { data: players = [] } = useQuery({ queryKey: ["players"], queryFn: fetchPlayers });
+  const featured = players.slice(0, 8);
+  const top = players[0];
   return (
     <div className="min-h-screen">
       <SiteNav />
 
-      {/* HERO */}
       <section className="relative overflow-hidden border-b border-border/60">
         <div className="absolute inset-0 pitch-grid opacity-40" />
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-2 md:py-24 md:gap-6">
@@ -48,9 +50,9 @@ function Landing() {
             </div>
             <dl className="mt-10 grid grid-cols-3 gap-6 border-t border-border/60 pt-6">
               {[
-                { k: "1,240+", v: "Players" },
-                { k: "180+", v: "Academies" },
-                { k: "65+", v: "Scouts & Clubs" },
+                { k: `${players.length}+`, v: "Players" },
+                { k: "8+", v: "Academies" },
+                { k: "6", v: "User roles" },
               ].map((s) => (
                 <div key={s.v}>
                   <dt className="font-display text-2xl font-bold text-gradient-gold md:text-3xl">{s.k}</dt>
@@ -64,22 +66,23 @@ function Landing() {
             <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-primary/30 via-transparent to-gold/20 blur-2xl" />
             <div className="relative overflow-hidden rounded-2xl border border-border/60">
               <img src={hero} alt="Tanzanian footballer at golden hour" width={1600} height={1024} className="h-full w-full object-cover" />
-              <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between rounded-xl border border-border/60 bg-background/80 p-4 backdrop-blur">
-                <div>
-                  <div className="text-xs uppercase tracking-widest text-muted-foreground">Featured talent</div>
-                  <div className="font-display text-lg font-bold">Mbwana Samatta Jr · 18 · ST</div>
+              {top && (
+                <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between rounded-xl border border-border/60 bg-background/80 p-4 backdrop-blur">
+                  <div>
+                    <div className="text-xs uppercase tracking-widest text-muted-foreground">Featured talent</div>
+                    <div className="font-display text-lg font-bold">{top.name} · {top.age} · {top.position}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-display text-3xl font-bold text-gradient-gold">{top.rating}</div>
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground">AI Rating</div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-display text-3xl font-bold text-gradient-gold">87</div>
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">AI Rating</div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* FEATURES */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <div className="mb-12 max-w-2xl">
           <div className="text-xs font-semibold uppercase tracking-widest text-primary">What we do</div>
@@ -105,7 +108,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* FEATURED PLAYERS */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <div className="mb-8 flex items-end justify-between">
           <div>
@@ -119,7 +121,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <div className="relative overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-primary/20 via-card to-gold/10 p-10 md:p-16">
           <div className="absolute inset-0 pitch-grid opacity-30" />
