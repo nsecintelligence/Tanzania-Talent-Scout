@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ROLES, type Role } from "@/lib/mock-data";
-import { signIn } from "@/lib/auth-store";
-import { Mail, Phone, Trophy } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
+import { Mail, Trophy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -17,14 +18,70 @@ export const Route = createFileRoute("/auth")({
 
 function Auth() {
   const nav = useNavigate();
+  const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [role, setRole] = useState<Role>("player");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function submit(method: string) {
-    signIn({ name: name || "Demo User", email: email || "demo@tts.tz", role });
-    toast.success(`Signed in via ${method}`);
-    nav({ to: "/dashboard" });
+  async function ensureRole(userId: string) {
+    await supabase.from("user_roles").insert({ user_id: userId, role }).select();
+  }
+
+  async function emailSubmit() {
+    if (!email || !password) return toast.error("Enter email and password");
+    setLoading(true);
+    try {
+      if (mode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email, password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+            data: { display_name: name || email.split("@")[0], role },
+          },
+        });
+        if (error) throw error;
+        if (data.user) {
+          // trigger creates profile + role from metadata; ensure role row exists for OAuth path too
+          await ensureRole(data.user.id).catch(() => {});
+        }
+        toast.success("Account created — welcome!");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        toast.success("Signed in");
+      }
+      nav({ to: "/dashboard" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Auth failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function google() {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin + "/dashboard",
+      });
+      if (result.error) throw result.error;
+      if (result.redirected) return;
+      // tokens received — assign role if first time
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        const { data: existing } = await supabase
+          .from("user_roles").select("id").eq("user_id", data.user.id).limit(1);
+        if (!existing?.length) await ensureRole(data.user.id);
+      }
+      toast.success("Signed in with Google");
+      nav({ to: "/dashboard" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Google sign-in failed");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -43,6 +100,7 @@ function Auth() {
             {ROLES.map((r) => (
               <button
                 key={r.value}
+                type="button"
                 onClick={() => setRole(r.value)}
                 className={`rounded-lg border p-4 text-left transition-all ${
                   role === r.value ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"
@@ -56,9 +114,13 @@ function Auth() {
         </div>
 
         <div className="rounded-2xl border border-border/60 bg-card p-6 md:p-8">
+          <div className="mb-6 flex gap-2">
+            <Button variant={mode === "signup" ? "default" : "outline"} size="sm" onClick={() => setMode("signup")}>Create account</Button>
+            <Button variant={mode === "signin" ? "default" : "outline"} size="sm" onClick={() => setMode("signin")}>Sign in</Button>
+          </div>
+
           <div className="md:hidden mb-6">
-            <h1 className="font-display text-2xl font-bold">Sign in</h1>
-            <Label className="mt-4 mb-2 block">I am a</Label>
+            <Label className="mb-2 block">I am a</Label>
             <select
               className="w-full rounded-md border border-border bg-input p-2"
               value={role}
@@ -69,42 +131,37 @@ function Auth() {
           </div>
 
           <Tabs defaultValue="email">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="email"><Mail className="mr-1 h-4 w-4" />Email</TabsTrigger>
-              <TabsTrigger value="phone"><Phone className="mr-1 h-4 w-4" />Phone</TabsTrigger>
               <TabsTrigger value="google">Google</TabsTrigger>
             </TabsList>
 
             <TabsContent value="email" className="mt-6 space-y-4">
-              <div>
-                <Label htmlFor="name">Full name</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Hassan Mwita" className="mt-1.5" />
-              </div>
+              {mode === "signup" && (
+                <div>
+                  <Label htmlFor="name">Full name</Label>
+                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Hassan Mwita" className="mt-1.5" />
+                </div>
+              )}
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" className="mt-1.5" />
               </div>
               <div>
                 <Label htmlFor="pw">Password</Label>
-                <Input id="pw" type="password" placeholder="••••••••" className="mt-1.5" />
+                <Input id="pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" className="mt-1.5" />
               </div>
-              <Button className="w-full" onClick={() => submit("Email")}>Continue with Email</Button>
-            </TabsContent>
-
-            <TabsContent value="phone" className="mt-6 space-y-4">
-              <div>
-                <Label htmlFor="ph">Phone number</Label>
-                <Input id="ph" placeholder="+255 7XX XXX XXX" className="mt-1.5" />
-              </div>
-              <Button className="w-full" onClick={() => submit("Phone")}>Send OTP</Button>
+              <Button className="w-full" disabled={loading} onClick={emailSubmit}>
+                {mode === "signup" ? "Create account" : "Sign in"}
+              </Button>
             </TabsContent>
 
             <TabsContent value="google" className="mt-6">
-              <Button variant="outline" className="w-full" onClick={() => submit("Google")}>
+              <Button variant="outline" className="w-full" disabled={loading} onClick={google}>
                 Continue with Google
               </Button>
               <p className="mt-3 text-center text-xs text-muted-foreground">
-                Demo only — no real Google account required.
+                A profile will be created using your Google account info.
               </p>
             </TabsContent>
           </Tabs>

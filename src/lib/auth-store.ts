@@ -1,32 +1,61 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 import type { Role } from "./mock-data";
 
-const KEY = "tts_auth";
+export type Session = {
+  user: User;
+  name: string;
+  email: string;
+  role: Role;
+} | null;
 
-export type Session = { name: string; email: string; role: Role } | null;
+const listeners = new Set<(s: Session) => void>();
+let current: Session = null;
+let initialized = false;
 
-function read(): Session {
-  if (typeof window === "undefined") return null;
-  try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch { return null; }
+async function load(user: User | null): Promise<Session> {
+  if (!user) return null;
+  const [{ data: profile }, { data: roles }] = await Promise.all([
+    supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", user.id),
+  ]);
+  const role = (roles?.[0]?.role as Role) ?? "player";
+  const name =
+    profile?.display_name ||
+    (user.user_metadata?.full_name as string | undefined) ||
+    user.email?.split("@")[0] ||
+    "Member";
+  return { user, name, email: user.email ?? "", role };
 }
 
-const listeners = new Set<() => void>();
-function emit() { listeners.forEach((l) => l()); }
-
-export function signIn(s: NonNullable<Session>) {
-  localStorage.setItem(KEY, JSON.stringify(s));
-  emit();
+function emit(s: Session) {
+  current = s;
+  listeners.forEach((l) => l(s));
 }
-export function signOut() {
-  localStorage.removeItem(KEY);
-  emit();
+
+function init() {
+  if (initialized || typeof window === "undefined") return;
+  initialized = true;
+  supabase.auth.getSession().then(async ({ data }) => {
+    emit(await load(data.session?.user ?? null));
+  });
+  supabase.auth.onAuthStateChange(async (_event, sess) => {
+    emit(await load(sess?.user ?? null));
+  });
+}
+
+export async function signOut() {
+  await supabase.auth.signOut();
+  emit(null);
 }
 
 export function useSession(): Session {
-  const [s, setS] = useState<Session>(null);
+  const [s, setS] = useState<Session>(current);
   useEffect(() => {
-    setS(read());
-    const l = () => setS(read());
+    init();
+    setS(current);
+    const l = (v: Session) => setS(v);
     listeners.add(l);
     return () => { listeners.delete(l); };
   }, []);

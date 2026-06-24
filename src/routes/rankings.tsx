@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { SiteNav, SiteFooter } from "@/components/site-nav";
-import { PLAYERS } from "@/lib/mock-data";
+import { fetchPlayers } from "@/lib/api";
+import type { Player } from "@/lib/mock-data";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { BadgeCheck, Trophy } from "lucide-react";
@@ -10,7 +12,10 @@ export const Route = createFileRoute("/rankings")({
   component: Rankings,
 });
 
-function RankTable({ players }: { players: typeof PLAYERS }) {
+function RankTable({ players }: { players: Player[] }) {
+  if (players.length === 0) {
+    return <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">No players in this ranking yet.</div>;
+  }
   return (
     <div className="overflow-hidden rounded-xl border border-border/60">
       <table className="w-full text-sm">
@@ -50,7 +55,8 @@ function RankTable({ players }: { players: typeof PLAYERS }) {
 }
 
 function Rankings() {
-  const sorted = [...PLAYERS].sort((a, b) => b.rating - a.rating);
+  const { data: players = [] } = useQuery({ queryKey: ["players"], queryFn: fetchPlayers });
+  const sorted = [...players].sort((a, b) => b.rating - a.rating);
   return (
     <div className="min-h-screen">
       <SiteNav />

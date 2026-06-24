@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as RankingsRouteImport } from './routes/rankings'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AcademiesRouteImport } from './routes/academies'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlayersIdRouteImport } from './routes/players.$id'
 
@@ -25,6 +27,11 @@ const VideosRoute = VideosRouteImport.update({
 const RankingsRoute = RankingsRouteImport.update({
   id: '/rankings',
   path: '/rankings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiscoverRoute = DiscoverRouteImport.update({
@@ -42,6 +49,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AcademiesRoute = AcademiesRouteImport.update({
+  id: '/academies',
+  path: '/academies',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,18 +67,22 @@ const PlayersIdRoute = PlayersIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/academies': typeof AcademiesRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
+  '/messages': typeof MessagesRoute
   '/rankings': typeof RankingsRoute
   '/videos': typeof VideosRoute
   '/players/$id': typeof PlayersIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/academies': typeof AcademiesRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
+  '/messages': typeof MessagesRoute
   '/rankings': typeof RankingsRoute
   '/videos': typeof VideosRoute
   '/players/$id': typeof PlayersIdRoute
@@ -74,9 +90,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/academies': typeof AcademiesRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
+  '/messages': typeof MessagesRoute
   '/rankings': typeof RankingsRoute
   '/videos': typeof VideosRoute
   '/players/$id': typeof PlayersIdRoute
@@ -85,27 +103,33 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/academies'
     | '/auth'
     | '/dashboard'
     | '/discover'
+    | '/messages'
     | '/rankings'
     | '/videos'
     | '/players/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/academies'
     | '/auth'
     | '/dashboard'
     | '/discover'
+    | '/messages'
     | '/rankings'
     | '/videos'
     | '/players/$id'
   id:
     | '__root__'
     | '/'
+    | '/academies'
     | '/auth'
     | '/dashboard'
     | '/discover'
+    | '/messages'
     | '/rankings'
     | '/videos'
     | '/players/$id'
@@ -113,9 +137,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcademiesRoute: typeof AcademiesRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   DiscoverRoute: typeof DiscoverRoute
+  MessagesRoute: typeof MessagesRoute
   RankingsRoute: typeof RankingsRoute
   VideosRoute: typeof VideosRoute
   PlayersIdRoute: typeof PlayersIdRoute
@@ -135,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/rankings'
       fullPath: '/rankings'
       preLoaderRoute: typeof RankingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/discover': {
@@ -158,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/academies': {
+      id: '/academies'
+      path: '/academies'
+      fullPath: '/academies'
+      preLoaderRoute: typeof AcademiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,9 +217,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcademiesRoute: AcademiesRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   DiscoverRoute: DiscoverRoute,
+  MessagesRoute: MessagesRoute,
   RankingsRoute: RankingsRoute,
   VideosRoute: VideosRoute,
   PlayersIdRoute: PlayersIdRoute,
@@ -187,13 +229,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
