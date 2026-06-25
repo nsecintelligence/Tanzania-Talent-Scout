@@ -136,6 +136,18 @@ function PlayerProfile() {
             </div>
           </TabsContent>
 
+          <TabsContent value="videos" className="mt-6">
+            {videos.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
+                No videos tagged for {player.name} yet.
+              </div>
+            ) : (
+              <VideoGrid videos={videos} />
+            )}
+          </TabsContent>
+
+
+
           <TabsContent value="ai" className="mt-6">
             <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-6">
               <div className="flex items-center gap-2 text-primary"><Brain className="h-5 w-5" /><span className="font-semibold">AI Scouting Report</span></div>
