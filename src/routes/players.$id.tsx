@@ -117,6 +117,7 @@ function PlayerProfile() {
         <Tabs defaultValue="stats">
           <TabsList>
             <TabsTrigger value="stats">Statistics</TabsTrigger>
+            <TabsTrigger value="videos">Videos ({videos.length})</TabsTrigger>
             <TabsTrigger value="ai">AI Analysis</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
           </TabsList>
