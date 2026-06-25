@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { SiteNav, SiteFooter } from "@/components/site-nav";
-import { fetchPlayer } from "@/lib/api";
+import { fetchPlayer, fetchPlayerVideos } from "@/lib/api";
+import { VideoGrid } from "./videos";
 import { useSession } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,11 @@ function PlayerProfile() {
   const { data: player, isLoading } = useQuery({
     queryKey: ["player", id],
     queryFn: () => fetchPlayer(id),
+  });
+  const { data: videos = [] } = useQuery({
+    queryKey: ["player-videos", id],
+    queryFn: () => fetchPlayerVideos(id),
+    enabled: !!id,
   });
 
   async function sendTrialInvite() {
@@ -111,6 +117,7 @@ function PlayerProfile() {
         <Tabs defaultValue="stats">
           <TabsList>
             <TabsTrigger value="stats">Statistics</TabsTrigger>
+            <TabsTrigger value="videos">Videos ({videos.length})</TabsTrigger>
             <TabsTrigger value="ai">AI Analysis</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
           </TabsList>
@@ -128,6 +135,18 @@ function PlayerProfile() {
               ))}
             </div>
           </TabsContent>
+
+          <TabsContent value="videos" className="mt-6">
+            {videos.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
+                No videos tagged for {player.name} yet.
+              </div>
+            ) : (
+              <VideoGrid videos={videos} />
+            )}
+          </TabsContent>
+
+
 
           <TabsContent value="ai" className="mt-6">
             <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-6">

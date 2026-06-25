@@ -104,3 +104,34 @@ export async function fetchVideos(): Promise<VideoRow[]> {
   if (error) throw error;
   return (data ?? []) as VideoRow[];
 }
+
+export async function fetchPlayerVideos(playerId: string): Promise<VideoRow[]> {
+  const { data, error } = await supabase
+    .from("videos")
+    .select("*")
+    .eq("player_id", playerId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as VideoRow[];
+}
+
+// Resolve a stored URL to a playable URL. If the stored value is a storage path
+// (no protocol) or an expired signed URL, mint a fresh signed URL.
+export async function resolveVideoUrl(stored: string): Promise<string> {
+  try {
+    const u = new URL(stored);
+    // Signed URL: refresh if it'll expire soon
+    if (u.pathname.includes("/object/sign/")) {
+      const idx = u.pathname.indexOf("/media/");
+      if (idx === -1) return stored;
+      const path = u.pathname.slice(idx + "/media/".length);
+      const { data } = await supabase.storage.from("media").createSignedUrl(path, 60 * 60 * 6);
+      return data?.signedUrl ?? stored;
+    }
+    return stored;
+  } catch {
+    // Not a URL — treat as storage path
+    const { data } = await supabase.storage.from("media").createSignedUrl(stored, 60 * 60 * 6);
+    return data?.signedUrl ?? stored;
+  }
+}
