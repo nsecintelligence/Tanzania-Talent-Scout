@@ -24,6 +24,11 @@ function PlayerProfile() {
     queryKey: ["player", id],
     queryFn: () => fetchPlayer(id),
   });
+  const { data: videos = [] } = useQuery({
+    queryKey: ["player-videos", id],
+    queryFn: () => fetchPlayerVideos(id),
+    enabled: !!id,
+  });
 
   async function sendTrialInvite() {
     if (!session) { toast.error("Sign in to send invites"); return; }
