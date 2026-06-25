@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { SiteNav, SiteFooter } from "@/components/site-nav";
-import { fetchPlayer } from "@/lib/api";
+import { fetchPlayer, fetchPlayerVideos } from "@/lib/api";
+import { VideoGrid } from "./videos";
 import { useSession } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
