@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useSession, signOut } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
-import { Trophy, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Trophy, Menu, X, AlertTriangle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const links = [
   { to: "/discover", label: "Discover" },
@@ -17,9 +18,22 @@ export function SiteNav() {
   const session = useSession();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
+  const [alertedAt, setAlertedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!session) { setAlertedAt(null); return; }
+    supabase.from("profiles").select("inactivity_alerted_at").eq("id", session.user.id).maybeSingle()
+      .then(({ data }) => setAlertedAt(data?.inactivity_alerted_at ?? null));
+  }, [session]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+      {alertedAt && (
+        <div className="bg-destructive/15 px-4 py-2 text-center text-xs text-destructive">
+          <AlertTriangle className="mr-1 inline h-3.5 w-3.5" />
+          Your account has been inactive for over a month. It will be deleted in ~30 days unless you stay active. Browse or update your profile to keep it.
+        </div>
+      )}
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2">
           <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">

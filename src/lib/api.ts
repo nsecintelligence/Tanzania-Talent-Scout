@@ -9,6 +9,7 @@ type DbPlayerRow = {
   height_cm: number | null;
   weight_kg: number | null;
   foot: string | null;
+  sex: string | null;
   region: string | null;
   rating: number;
   potential: number;
@@ -35,6 +36,7 @@ export function mapPlayer(row: DbPlayerRow): Player {
     height: row.height_cm ?? 175,
     weight: row.weight_kg ?? 70,
     foot: (row.foot as "Left" | "Right" | "Both") ?? "Right",
+    sex: (row.sex as "male" | "female") ?? "male",
     region: row.region ?? "Tanzania",
     academy: row.academies?.name ?? "Free agent",
     rating: row.rating,
@@ -135,3 +137,82 @@ export async function resolveVideoUrl(stored: string): Promise<string> {
     return data?.signedUrl ?? stored;
   }
 }
+
+// ---- Scout tracking (3-month progress windows) ----
+export type Tracking = {
+  id: string;
+  scout_id: string;
+  player_id: string;
+  started_at: string;
+  ends_at: string;
+  note: string | null;
+};
+export type ProgressEntry = {
+  id: string;
+  tracking_id: string;
+  player_id: string;
+  entry_date: string;
+  rating: number | null;
+  note: string;
+  created_at: string;
+};
+
+export async function fetchTracking(scoutId: string, playerId: string): Promise<Tracking | null> {
+  const { data, error } = await supabase
+    .from("scout_tracked_players")
+    .select("*")
+    .eq("scout_id", scoutId)
+    .eq("player_id", playerId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as Tracking) ?? null;
+}
+
+export async function startTracking(scoutId: string, playerId: string): Promise<Tracking> {
+  const { data, error } = await supabase
+    .from("scout_tracked_players")
+    .insert({ scout_id: scoutId, player_id: playerId })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as Tracking;
+}
+
+export async function stopTracking(trackingId: string) {
+  const { error } = await supabase.from("scout_tracked_players").delete().eq("id", trackingId);
+  if (error) throw error;
+}
+
+export async function fetchProgressEntries(trackingId: string): Promise<ProgressEntry[]> {
+  const { data, error } = await supabase
+    .from("player_progress_entries")
+    .select("*")
+    .eq("tracking_id", trackingId)
+    .order("entry_date", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as ProgressEntry[];
+}
+
+export async function addProgressEntry(input: {
+  tracking_id: string; scout_id: string; player_id: string;
+  note: string; rating?: number;
+}): Promise<ProgressEntry> {
+  const { data, error } = await supabase
+    .from("player_progress_entries")
+    .insert(input)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as ProgressEntry;
+}
+
+export async function fetchMyTrackedPlayers(scoutId: string) {
+  const { data, error } = await supabase
+    .from("scout_tracked_players")
+    .select("*, players(id, name, position, photo_url)")
+    .eq("scout_id", scoutId)
+    .order("started_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+

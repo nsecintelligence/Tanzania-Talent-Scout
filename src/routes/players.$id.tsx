@@ -1,7 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { SiteNav, SiteFooter } from "@/components/site-nav";
-import { fetchPlayer, fetchPlayerVideos } from "@/lib/api";
+import {
+  fetchPlayer, fetchPlayerVideos,
+  fetchTracking, startTracking, stopTracking,
+  fetchProgressEntries, addProgressEntry,
+} from "@/lib/api";
 import { VideoGrid } from "./videos";
 import { useSession } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +14,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { BadgeCheck, MapPin, Share2, MessageSquare, Send, Brain, Award, Trophy } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BadgeCheck, MapPin, Share2, MessageSquare, Send, Brain, Award, Trophy, Eye, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/players/$id")({
@@ -120,6 +128,7 @@ function PlayerProfile() {
             <TabsTrigger value="videos">Videos ({videos.length})</TabsTrigger>
             <TabsTrigger value="ai">AI Analysis</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
+            {session?.role === "scout" && <TabsTrigger value="progress">Scout tracking</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="stats" className="mt-6">
@@ -195,6 +204,12 @@ function PlayerProfile() {
               </div>
             )}
           </TabsContent>
+
+          {session?.role === "scout" && (
+            <TabsContent value="progress" className="mt-6">
+              <ScoutTrackingPanel scoutId={session.user.id} playerId={player.id} playerName={player.name} />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 
@@ -202,3 +217,128 @@ function PlayerProfile() {
     </div>
   );
 }
+
+function ScoutTrackingPanel({ scoutId, playerId, playerName }: { scoutId: string; playerId: string; playerName: string }) {
+  const qc = useQueryClient();
+  const { data: tracking, isLoading } = useQuery({
+    queryKey: ["tracking", scoutId, playerId],
+    queryFn: () => fetchTracking(scoutId, playerId),
+  });
+  const { data: entries = [] } = useQuery({
+    queryKey: ["progress", tracking?.id],
+    queryFn: () => fetchProgressEntries(tracking!.id),
+    enabled: !!tracking?.id,
+  });
+  const [note, setNote] = useState("");
+  const [rating, setRating] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+
+  async function onStart() {
+    setBusy(true);
+    try {
+      await startTracking(scoutId, playerId);
+      toast.success(`Now tracking ${playerName} for 3 months`);
+      qc.invalidateQueries({ queryKey: ["tracking", scoutId, playerId] });
+    } catch (e: any) { toast.error(e.message ?? "Failed to start tracking"); }
+    finally { setBusy(false); }
+  }
+
+  async function onStop() {
+    if (!tracking) return;
+    setBusy(true);
+    try {
+      await stopTracking(tracking.id);
+      toast.success("Tracking stopped");
+      qc.invalidateQueries({ queryKey: ["tracking", scoutId, playerId] });
+    } catch (e: any) { toast.error(e.message ?? "Failed"); }
+    finally { setBusy(false); }
+  }
+
+  async function onAddEntry() {
+    if (!tracking || !note.trim()) { toast.error("Add an observation note"); return; }
+    setBusy(true);
+    try {
+      await addProgressEntry({
+        tracking_id: tracking.id, scout_id: scoutId, player_id: playerId,
+        note: note.trim(), rating: rating ? Math.max(1, Math.min(100, Number(rating))) : undefined,
+      });
+      setNote(""); setRating("");
+      qc.invalidateQueries({ queryKey: ["progress", tracking.id] });
+      toast.success("Progress logged");
+    } catch (e: any) { toast.error(e.message ?? "Failed"); }
+    finally { setBusy(false); }
+  }
+
+  if (isLoading) return <div className="text-muted-foreground">Loading tracking…</div>;
+
+  if (!tracking) {
+    return (
+      <div className="rounded-xl border border-primary/30 bg-primary/5 p-8 text-center">
+        <Eye className="mx-auto h-8 w-8 text-primary" />
+        <h3 className="mt-3 font-display text-2xl font-bold">Track {playerName}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Open a 3-month scouting window. Log observations, ratings and progress over time — visible only to you.</p>
+        <Button className="mt-4" onClick={onStart} disabled={busy}><Plus className="mr-1.5 h-4 w-4" />Start 3-month tracking</Button>
+      </div>
+    );
+  }
+
+  const start = new Date(tracking.started_at);
+  const end = new Date(tracking.ends_at);
+  const totalMs = end.getTime() - start.getTime();
+  const elapsed = Math.min(totalMs, Date.now() - start.getTime());
+  const pct = Math.max(0, Math.min(100, (elapsed / totalMs) * 100));
+  const daysLeft = Math.max(0, Math.ceil((end.getTime() - Date.now()) / 86400000));
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-border/60 bg-card p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">3-month tracking window</div>
+            <div className="font-display text-lg font-bold">{start.toLocaleDateString()} → {end.toLocaleDateString()}</div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="border-primary/40 text-primary">{daysLeft} days left</Badge>
+            <Button variant="outline" size="sm" onClick={onStop} disabled={busy}><X className="mr-1 h-3 w-3" />Stop</Button>
+          </div>
+        </div>
+        <Progress value={pct} className="mt-4 h-2" />
+      </div>
+
+      <div className="rounded-xl border border-border/60 bg-card p-5">
+        <h4 className="font-display text-lg font-bold">Log new observation</h4>
+        <div className="mt-3 grid gap-3 md:grid-cols-[1fr_120px_auto] md:items-end">
+          <div>
+            <Label>Note</Label>
+            <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="What did you observe today?" rows={2} />
+          </div>
+          <div>
+            <Label>Rating (1–100)</Label>
+            <Input type="number" min={1} max={100} value={rating} onChange={(e) => setRating(e.target.value)} placeholder="Optional" />
+          </div>
+          <Button onClick={onAddEntry} disabled={busy}><Plus className="mr-1 h-4 w-4" />Add</Button>
+        </div>
+      </div>
+
+      <div>
+        <h4 className="font-display text-lg font-bold">Timeline ({entries.length})</h4>
+        {entries.length === 0 ? (
+          <div className="mt-3 rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">No entries yet — log your first observation above.</div>
+        ) : (
+          <ol className="mt-3 space-y-3">
+            {entries.map((e) => (
+              <li key={e.id} className="rounded-xl border border-border/60 bg-card p-4">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{new Date(e.entry_date).toLocaleDateString()}</span>
+                  {e.rating != null && <Badge className="bg-gold/10 text-gold border-gold/40" variant="outline">Rating {e.rating}</Badge>}
+                </div>
+                <p className="mt-2 text-sm">{e.note}</p>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </div>
+  );
+}
+

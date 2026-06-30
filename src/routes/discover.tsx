@@ -21,6 +21,7 @@ function Discover() {
   const [q, setQ] = useState("");
   const [pos, setPos] = useState("All");
   const [region, setRegion] = useState("All");
+  const [sex, setSex] = useState<"All" | "male" | "female">("All");
   const [age, setAge] = useState<[number, number]>([15, 30]);
   const [minRating, setMinRating] = useState(60);
 
@@ -33,9 +34,10 @@ function Discover() {
     (!q || p.name.toLowerCase().includes(q.toLowerCase())) &&
     (pos === "All" || p.position === pos) &&
     (region === "All" || p.region === region) &&
+    (sex === "All" || p.sex === sex) &&
     p.age >= age[0] && p.age <= age[1] &&
     p.rating >= minRating
-  ), [players, q, pos, region, age, minRating]);
+  ), [players, q, pos, region, sex, age, minRating]);
 
   return (
     <div className="min-h-screen">
@@ -68,6 +70,14 @@ function Discover() {
               <select value={region} onChange={(e) => setRegion(e.target.value)} className="mt-1.5 w-full rounded-md border border-border bg-input p-2 text-sm">
                 {regions.map((r) => <option key={r}>{r}</option>)}
               </select>
+            </div>
+            <div>
+              <Label>Sex</Label>
+              <div className="mt-2 flex gap-1.5">
+                {(["All","male","female"] as const).map((s) => (
+                  <button key={s} onClick={() => setSex(s)} className={`flex-1 rounded-md px-2.5 py-1 text-xs font-medium capitalize transition ${sex === s ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>{s}</button>
+                ))}
+              </div>
             </div>
             <div>
               <div className="flex justify-between"><Label>Age</Label><span className="text-xs text-muted-foreground">{age[0]}–{age[1]}</span></div>
