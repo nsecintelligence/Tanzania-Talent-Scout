@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useSession, signOut } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
-import { Trophy, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Trophy, Menu, X, AlertTriangle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const links = [
   { to: "/discover", label: "Discover" },
