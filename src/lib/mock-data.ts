@@ -30,6 +30,7 @@ export type Player = {
   height: number;
   weight: number;
   foot: "Left" | "Right" | "Both";
+  sex: "male" | "female";
   region: string;
   academy: string;
   rating: number;

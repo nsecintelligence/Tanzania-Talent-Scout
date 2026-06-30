@@ -9,6 +9,7 @@ type DbPlayerRow = {
   height_cm: number | null;
   weight_kg: number | null;
   foot: string | null;
+  sex: string | null;
   region: string | null;
   rating: number;
   potential: number;
@@ -35,6 +36,7 @@ export function mapPlayer(row: DbPlayerRow): Player {
     height: row.height_cm ?? 175,
     weight: row.weight_kg ?? 70,
     foot: (row.foot as "Left" | "Right" | "Both") ?? "Right",
+    sex: (row.sex as "male" | "female") ?? "male",
     region: row.region ?? "Tanzania",
     academy: row.academies?.name ?? "Free agent",
     rating: row.rating,
