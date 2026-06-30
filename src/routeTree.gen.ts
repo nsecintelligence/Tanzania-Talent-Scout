@@ -18,6 +18,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AcademiesRouteImport } from './routes/academies'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlayersIdRouteImport } from './routes/players.$id'
+import { Route as ApiPublicHooksInactivityCheckRouteImport } from './routes/api/public/hooks/inactivity-check'
 
 const VideosRoute = VideosRouteImport.update({
   id: '/videos',
@@ -64,6 +65,12 @@ const PlayersIdRoute = PlayersIdRouteImport.update({
   path: '/players/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksInactivityCheckRoute =
+  ApiPublicHooksInactivityCheckRouteImport.update({
+    id: '/api/public/hooks/inactivity-check',
+    path: '/api/public/hooks/inactivity-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/rankings': typeof RankingsRoute
   '/videos': typeof VideosRoute
   '/players/$id': typeof PlayersIdRoute
+  '/api/public/hooks/inactivity-check': typeof ApiPublicHooksInactivityCheckRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +94,7 @@ export interface FileRoutesByTo {
   '/rankings': typeof RankingsRoute
   '/videos': typeof VideosRoute
   '/players/$id': typeof PlayersIdRoute
+  '/api/public/hooks/inactivity-check': typeof ApiPublicHooksInactivityCheckRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +107,7 @@ export interface FileRoutesById {
   '/rankings': typeof RankingsRoute
   '/videos': typeof VideosRoute
   '/players/$id': typeof PlayersIdRoute
+  '/api/public/hooks/inactivity-check': typeof ApiPublicHooksInactivityCheckRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/rankings'
     | '/videos'
     | '/players/$id'
+    | '/api/public/hooks/inactivity-check'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '/rankings'
     | '/videos'
     | '/players/$id'
+    | '/api/public/hooks/inactivity-check'
   id:
     | '__root__'
     | '/'
@@ -133,6 +145,7 @@ export interface FileRouteTypes {
     | '/rankings'
     | '/videos'
     | '/players/$id'
+    | '/api/public/hooks/inactivity-check'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,6 +158,7 @@ export interface RootRouteChildren {
   RankingsRoute: typeof RankingsRoute
   VideosRoute: typeof VideosRoute
   PlayersIdRoute: typeof PlayersIdRoute
+  ApiPublicHooksInactivityCheckRoute: typeof ApiPublicHooksInactivityCheckRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -212,6 +226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayersIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/inactivity-check': {
+      id: '/api/public/hooks/inactivity-check'
+      path: '/api/public/hooks/inactivity-check'
+      fullPath: '/api/public/hooks/inactivity-check'
+      preLoaderRoute: typeof ApiPublicHooksInactivityCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -225,6 +246,7 @@ const rootRouteChildren: RootRouteChildren = {
   RankingsRoute: RankingsRoute,
   VideosRoute: VideosRoute,
   PlayersIdRoute: PlayersIdRoute,
+  ApiPublicHooksInactivityCheckRoute: ApiPublicHooksInactivityCheckRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
