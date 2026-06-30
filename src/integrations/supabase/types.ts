@@ -77,6 +77,54 @@ export type Database = {
         }
         Relationships: []
       }
+      player_progress_entries: {
+        Row: {
+          created_at: string
+          entry_date: string
+          id: string
+          note: string
+          player_id: string
+          rating: number | null
+          scout_id: string
+          tracking_id: string
+        }
+        Insert: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          note: string
+          player_id: string
+          rating?: number | null
+          scout_id: string
+          tracking_id: string
+        }
+        Update: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          note?: string
+          player_id?: string
+          rating?: number | null
+          scout_id?: string
+          tracking_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_progress_entries_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_progress_entries_tracking_id_fkey"
+            columns: ["tracking_id"]
+            isOneToOne: false
+            referencedRelation: "scout_tracked_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       players: {
         Row: {
           academy_id: string | null
@@ -94,6 +142,7 @@ export type Database = {
           potential: number
           rating: number
           region: string | null
+          sex: string
           stats: Json
           user_id: string | null
           verified: boolean
@@ -115,6 +164,7 @@ export type Database = {
           potential?: number
           rating?: number
           region?: string | null
+          sex?: string
           stats?: Json
           user_id?: string | null
           verified?: boolean
@@ -136,6 +186,7 @@ export type Database = {
           potential?: number
           rating?: number
           region?: string | null
+          sex?: string
           stats?: Json
           user_id?: string | null
           verified?: boolean
@@ -158,6 +209,8 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          inactivity_alerted_at: string | null
+          last_active_at: string
           phone: string | null
           region: string | null
           verified: boolean
@@ -168,6 +221,8 @@ export type Database = {
           created_at?: string
           display_name?: string
           id: string
+          inactivity_alerted_at?: string | null
+          last_active_at?: string
           phone?: string | null
           region?: string | null
           verified?: boolean
@@ -178,11 +233,48 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          inactivity_alerted_at?: string | null
+          last_active_at?: string
           phone?: string | null
           region?: string | null
           verified?: boolean
         }
         Relationships: []
+      }
+      scout_tracked_players: {
+        Row: {
+          ends_at: string
+          id: string
+          note: string | null
+          player_id: string
+          scout_id: string
+          started_at: string
+        }
+        Insert: {
+          ends_at?: string
+          id?: string
+          note?: string | null
+          player_id: string
+          scout_id: string
+          started_at?: string
+        }
+        Update: {
+          ends_at?: string
+          id?: string
+          note?: string | null
+          player_id?: string
+          scout_id?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_tracked_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trial_invitations: {
         Row: {
@@ -309,6 +401,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      touch_activity: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "coach" | "player" | "scout" | "club" | "agent"
