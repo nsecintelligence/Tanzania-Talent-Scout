@@ -128,6 +128,7 @@ function PlayerProfile() {
             <TabsTrigger value="videos">Videos ({videos.length})</TabsTrigger>
             <TabsTrigger value="ai">AI Analysis</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
+            {session?.role === "scout" && <TabsTrigger value="progress">Scout tracking</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="stats" className="mt-6">
