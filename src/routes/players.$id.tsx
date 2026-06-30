@@ -1,7 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { SiteNav, SiteFooter } from "@/components/site-nav";
-import { fetchPlayer, fetchPlayerVideos } from "@/lib/api";
+import {
+  fetchPlayer, fetchPlayerVideos,
+  fetchTracking, startTracking, stopTracking,
+  fetchProgressEntries, addProgressEntry,
+} from "@/lib/api";
 import { VideoGrid } from "./videos";
 import { useSession } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +14,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { BadgeCheck, MapPin, Share2, MessageSquare, Send, Brain, Award, Trophy } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BadgeCheck, MapPin, Share2, MessageSquare, Send, Brain, Award, Trophy, Eye, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/players/$id")({
