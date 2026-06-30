@@ -39,9 +39,11 @@ function init() {
   initialized = true;
   supabase.auth.getSession().then(async ({ data }) => {
     emit(await load(data.session?.user ?? null));
+    if (data.session?.user) supabase.rpc("touch_activity").then(() => {});
   });
   supabase.auth.onAuthStateChange(async (_event, sess) => {
     emit(await load(sess?.user ?? null));
+    if (sess?.user) supabase.rpc("touch_activity").then(() => {});
   });
 }
 
