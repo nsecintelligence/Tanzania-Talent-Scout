@@ -7,9 +7,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ROLES, type Role } from "@/lib/mock-data";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { Mail, Trophy } from "lucide-react";
-import { useState } from "react";
+import { Mail, Trophy, ShieldCheck } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+  signUpSchema, signInSchema, isPasswordPwned, passwordStrength,
+  recordLoginAttempt, recentFailedLogins, auditLog, RATE_LIMIT,
+} from "@/lib/security";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — Tanzania Talent Scout" }] }),
