@@ -184,7 +184,19 @@ function Auth() {
               </div>
               <div>
                 <Label htmlFor="pw">Password</Label>
-                <Input id="pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" className="mt-1.5" />
+                <Input id="pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" className="mt-1.5" />
+                {mode === "signup" && password.length > 0 && (
+                  <div className="mt-2">
+                    <div className="flex h-1.5 gap-1">
+                      {[0,1,2,3,4].map((i) => (
+                        <div key={i} className={`h-full flex-1 rounded ${i <= strength.score ? (strength.score >= 3 ? "bg-primary" : strength.score >= 2 ? "bg-amber-400" : "bg-destructive") : "bg-muted"}`} />
+                      ))}
+                    </div>
+                    <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <ShieldCheck className="h-3 w-3" /> {strength.label} · checked against known breaches
+                    </div>
+                  </div>
+                )}
               </div>
               <Button className="w-full" disabled={loading} onClick={emailSubmit}>
                 {mode === "signup" ? "Create account" : "Sign in"}
