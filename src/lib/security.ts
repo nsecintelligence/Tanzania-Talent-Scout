@@ -125,8 +125,8 @@ export async function auditLog(
 ) {
   await supabase.rpc("append_audit_log", {
     _action: action,
-    _target_type: target_type ?? null,
-    _target_id: target_id ?? null,
+    _target_type: target_type,
+    _target_id: target_id,
     _metadata: metadata as never,
   });
 }
