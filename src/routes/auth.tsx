@@ -33,11 +33,36 @@ function Auth() {
     await supabase.from("user_roles").insert({ user_id: userId, role }).select();
   }
 
+  const strength = useMemo(() => passwordStrength(password), [password]);
+
   async function emailSubmit() {
-    if (!email || !password) return toast.error("Enter email and password");
+    // Zod validation (client-side; server RLS is the final gate).
+    const schema = mode === "signup" ? signUpSchema : signInSchema;
+    const parsed = schema.safeParse(mode === "signup" ? { name, email, password } : { email, password });
+    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+
+    // Rate-limit sign-in attempts server-side to blunt credential stuffing.
+    if (mode === "signin") {
+      const failed = await recentFailedLogins(email, RATE_LIMIT.windowMinutes);
+      if (failed >= RATE_LIMIT.maxFailuresBeforeLockout) {
+        await recordLoginAttempt(email, false, "rate_limited");
+        return toast.error(`Too many failed attempts. Try again in ${RATE_LIMIT.windowMinutes} minutes.`);
+      }
+    }
+
     setLoading(true);
     try {
       if (mode === "signup") {
+        // HIBP breach-check via k-anonymity — first 5 chars of SHA-1 only.
+        const pwned = await isPasswordPwned(password);
+        if (pwned > 0) {
+          setLoading(false);
+          return toast.error(`This password appeared in ${pwned.toLocaleString()} known breaches. Please choose another.`);
+        }
+        if (strength.score < 2) {
+          setLoading(false);
+          return toast.error("Password too weak — mix upper/lower case, numbers, symbols.");
+        }
         const { data, error } = await supabase.auth.signUp({
           email, password,
           options: {
@@ -47,13 +72,19 @@ function Auth() {
         });
         if (error) throw error;
         if (data.user) {
-          // trigger creates profile + role from metadata; ensure role row exists for OAuth path too
           await ensureRole(data.user.id).catch(() => {});
+          await auditLog("auth.signup", "user", data.user.id, { role }).catch(() => {});
         }
+        await recordLoginAttempt(email, true, "signup");
         toast.success("Account created — welcome!");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          await recordLoginAttempt(email, false, error.message.slice(0, 100));
+          throw error;
+        }
+        await recordLoginAttempt(email, true);
+        if (data.user) await auditLog("auth.signin", "user", data.user.id).catch(() => {});
         toast.success("Signed in");
       }
       nav({ to: "/dashboard" });
