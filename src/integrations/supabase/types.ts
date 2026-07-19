@@ -50,6 +50,114 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: number
+          metadata: Json
+          prev_hash: string
+          row_hash: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: number
+          metadata?: Json
+          prev_hash?: string
+          row_hash: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: number
+          metadata?: Json
+          prev_hash?: string
+          row_hash?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
+      content_reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id?: string
+          target_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      login_attempts: {
+        Row: {
+          created_at: string
+          email_hash: string
+          id: number
+          ip_hash: string | null
+          reason: string | null
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_hash: string
+          id?: number
+          ip_hash?: string | null
+          reason?: string | null
+          success: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_hash?: string
+          id?: number
+          ip_hash?: string | null
+          reason?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           body: string
@@ -394,6 +502,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      append_audit_log: {
+        Args: {
+          _action: string
+          _metadata?: Json
+          _target_id?: string
+          _target_type?: string
+        }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -401,10 +518,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      recent_failed_logins: {
+        Args: { _email_hash: string; _window_minutes?: number }
+        Returns: number
+      }
       touch_activity: { Args: never; Returns: undefined }
+      verify_audit_chain: {
+        Args: never
+        Returns: {
+          actual_hash: string
+          broken_at: number
+          expected_hash: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "coach" | "player" | "scout" | "club" | "agent"
+      report_status: "open" | "reviewing" | "resolved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -533,6 +663,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "coach", "player", "scout", "club", "agent"],
+      report_status: ["open", "reviewing", "resolved", "rejected"],
     },
   },
 } as const

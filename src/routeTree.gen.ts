@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VideosRouteImport } from './routes/videos'
+import { Route as SecurityRouteImport } from './routes/security'
 import { Route as RankingsRouteImport } from './routes/rankings'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -25,9 +27,19 @@ const VideosRoute = VideosRouteImport.update({
   path: '/videos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RankingsRoute = RankingsRouteImport.update({
   id: '/rankings',
   path: '/rankings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MessagesRoute = MessagesRouteImport.update({
@@ -79,7 +91,9 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/messages': typeof MessagesRoute
+  '/privacy': typeof PrivacyRoute
   '/rankings': typeof RankingsRoute
+  '/security': typeof SecurityRoute
   '/videos': typeof VideosRoute
   '/players/$id': typeof PlayersIdRoute
   '/api/public/hooks/inactivity-check': typeof ApiPublicHooksInactivityCheckRoute
@@ -91,7 +105,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/messages': typeof MessagesRoute
+  '/privacy': typeof PrivacyRoute
   '/rankings': typeof RankingsRoute
+  '/security': typeof SecurityRoute
   '/videos': typeof VideosRoute
   '/players/$id': typeof PlayersIdRoute
   '/api/public/hooks/inactivity-check': typeof ApiPublicHooksInactivityCheckRoute
@@ -104,7 +120,9 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/messages': typeof MessagesRoute
+  '/privacy': typeof PrivacyRoute
   '/rankings': typeof RankingsRoute
+  '/security': typeof SecurityRoute
   '/videos': typeof VideosRoute
   '/players/$id': typeof PlayersIdRoute
   '/api/public/hooks/inactivity-check': typeof ApiPublicHooksInactivityCheckRoute
@@ -118,7 +136,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discover'
     | '/messages'
+    | '/privacy'
     | '/rankings'
+    | '/security'
     | '/videos'
     | '/players/$id'
     | '/api/public/hooks/inactivity-check'
@@ -130,7 +150,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discover'
     | '/messages'
+    | '/privacy'
     | '/rankings'
+    | '/security'
     | '/videos'
     | '/players/$id'
     | '/api/public/hooks/inactivity-check'
@@ -142,7 +164,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discover'
     | '/messages'
+    | '/privacy'
     | '/rankings'
+    | '/security'
     | '/videos'
     | '/players/$id'
     | '/api/public/hooks/inactivity-check'
@@ -155,7 +179,9 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DiscoverRoute: typeof DiscoverRoute
   MessagesRoute: typeof MessagesRoute
+  PrivacyRoute: typeof PrivacyRoute
   RankingsRoute: typeof RankingsRoute
+  SecurityRoute: typeof SecurityRoute
   VideosRoute: typeof VideosRoute
   PlayersIdRoute: typeof PlayersIdRoute
   ApiPublicHooksInactivityCheckRoute: typeof ApiPublicHooksInactivityCheckRoute
@@ -170,11 +196,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VideosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rankings': {
       id: '/rankings'
       path: '/rankings'
       fullPath: '/rankings'
       preLoaderRoute: typeof RankingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/messages': {
@@ -243,7 +283,9 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DiscoverRoute: DiscoverRoute,
   MessagesRoute: MessagesRoute,
+  PrivacyRoute: PrivacyRoute,
   RankingsRoute: RankingsRoute,
+  SecurityRoute: SecurityRoute,
   VideosRoute: VideosRoute,
   PlayersIdRoute: PlayersIdRoute,
   ApiPublicHooksInactivityCheckRoute: ApiPublicHooksInactivityCheckRoute,
@@ -251,13 +293,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

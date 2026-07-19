@@ -1,9 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useSession, signOut } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
-import { Trophy, Menu, X, AlertTriangle } from "lucide-react";
+import { Trophy, Menu, X, AlertTriangle, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { auditLog } from "@/lib/security";
 
 const links = [
   { to: "/discover", label: "Discover" },
@@ -61,11 +62,23 @@ export function SiteNav() {
         <div className="hidden items-center gap-2 md:flex">
           {session ? (
             <>
+              <Link to="/privacy" className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground" title="Privacy & my data">
+                <Shield className="h-4 w-4" />
+              </Link>
+              {session.role === "admin" && (
+                <Link to="/security" className="rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-accent" title="Security dashboard">
+                  Security
+                </Link>
+              )}
               <div className="text-right text-xs leading-tight">
                 <div className="font-medium text-foreground">{session.name}</div>
                 <div className="text-muted-foreground capitalize">{session.role}</div>
               </div>
-              <Button variant="outline" size="sm" onClick={async () => { await signOut(); nav({ to: "/" }); }}>
+              <Button variant="outline" size="sm" onClick={async () => {
+                await auditLog("auth.signout", "user", session.user.id).catch(() => {});
+                await signOut();
+                nav({ to: "/" });
+              }}>
                 Sign out
               </Button>
             </>

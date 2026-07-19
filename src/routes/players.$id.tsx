@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BadgeCheck, MapPin, Share2, MessageSquare, Send, Brain, Award, Trophy, Eye, Plus, X } from "lucide-react";
 import { toast } from "sonner";
+import { ReportDialog } from "@/components/report-dialog";
 
 export const Route = createFileRoute("/players/$id")({
   head: () => ({ meta: [{ title: "Player — Tanzania Talent Scout" }] }),
@@ -89,7 +90,10 @@ function PlayerProfile() {
               )}
               <Badge variant="outline">{player.academy}</Badge>
             </div>
-            <h1 className="mt-3 font-display text-5xl font-extrabold">{player.name}</h1>
+            <div className="mt-3 flex items-start justify-between gap-4">
+              <h1 className="font-display text-5xl font-extrabold">{player.name}</h1>
+              <ReportDialog targetType="player" targetId={player.id} />
+            </div>
             <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <span>Age {player.age}</span>
               <span>{player.height} cm · {player.weight} kg</span>
