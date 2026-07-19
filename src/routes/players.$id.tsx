@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BadgeCheck, MapPin, Share2, MessageSquare, Send, Brain, Award, Trophy, Eye, Plus, X } from "lucide-react";
 import { toast } from "sonner";
+import { ReportDialog } from "@/components/report-dialog";
 
 export const Route = createFileRoute("/players/$id")({
   head: () => ({ meta: [{ title: "Player — Tanzania Talent Scout" }] }),
