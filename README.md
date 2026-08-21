@@ -1,192 +1,213 @@
-# Talent Hub Tanzania
+<p align="center">
+  <a href="https://giphy.com/gifs/football-yfldubai-youth-league-laeZJkmsvsPF58gbtO">
+    <img
+      src="https://media.giphy.com/media/laeZJkmsvsPF58gbtO/giphy.gif"
+      alt="Youth Football Players"
+      width="800"
+    />
+  </a>
+</p>
+# Tanzania Talent Scout
 
-Build a modern football talent discovery platform called "Tanzania Talent Scout".
+### Discover,Showcase,Connect.
 
-The platform connects football coaches, academies, players, scouts, clubs, and agents across Tanzania.
+Tanzania Talent Scout is a football talent discovery platform created to connect players, coaches, academies, scouts, clubs and agents across Tanzania.
 
-User Roles
+The idea is simple. There are talented football players all over Tanzania, but many of them do not get the opportunity to be seen by the right people.
 
- Super Admin
+Tanzania Talent Scout gives players a place to create their football profile, showcase their skills and make themselves easier to discover.
 
- Coach/Academy Manager
+The platform also gives scouts, coaches and clubs a better way to find and evaluate football talent.
 
- Player
+---
 
- Scout
+## ⚽ About Tanzania Talent Scout
 
- Club Representative
+Football talent can be found everywhere in Tanzania.
 
- Agent (optional)
+You can find talented players in academies, schools, local teams, regional competitions and community football grounds. The problem is that many of these players never get noticed outside their local area.
 
-Core Features
+Tanzania Talent Scout is designed to help change that.
 
-Authentication:
+A player can create a profile and share important information such as their position, statistics, photos, videos, achievements and football experience.
 
- Email login
+Scouts and clubs can then search for players and learn more about their abilities.
 
- Phone login
+The goal is to make football talent more visible and create more opportunities for players.
 
- Google login
+---
 
- Role-based access
+## 🎯 Our Goal
 
-Coach Features:
+Our goal is to create a platform where a talented football player from any part of Tanzania can create a profile and have a chance of being discovered.
 
- Create academy/team
+We want to connect:
 
- Add players
+**Players → Coaches → Academies → Scouts → Clubs → Agents**
 
- Manage players
+Instead of talent depending only on personal connections, location or whether a scout happens to attend a particular match, the platform can provide another way for players to get noticed.
 
- Upload match videos
+---
 
- Upload training videos
+# 👥 User Roles
 
- Enter player statistics
+Tanzania Talent Scout is designed for different people involved in football.
 
- Receive scout inquiries
+---
 
-Player Features:
+## 🧑‍🏫 Coach and Academy Manager
 
- Player profile
+Coaches and academy managers can manage their teams and players.
 
- Personal details
+They can eventually:
 
- Position
+- Create an academy
+- Create teams
+- Add players
+- Manage player profiles
+- Upload match videos
+- Upload training videos
+- Add player statistics
+- Respond to scout inquiries
+- Manage trial requests
 
- Height
+---
 
- Weight
+## ⚽ Player
 
- Preferred foot
+Players are at the centre of the platform.
 
- Statistics
+Each player can have a profile containing information such as:
 
- Photos
+- Name
+- Age
+- Location
+- Position
+- Height
+- Weight
+- Preferred foot
+- Statistics
+- Photos
+- Videos
+- Achievements
+- Rating
+- Verification status
 
- Videos
+The player can also share their profile with scouts, coaches and clubs.
 
- Achievements
+---
 
- AI rating
+## 🔎 Scout
 
- Profile sharing
+Scouts can use the platform to discover players.
 
-Scout Features:
+They can search for players based on things such as:
 
- Search players
+- Age
+- Position
+- Region
+- Rating
+- Academy
+- Preferred foot
+- Verification status
 
- Filter by age
+Scouts can also view player profiles, watch videos, save players and contact coaches.
 
- Filter by position
+---
 
- Filter by location
+## 🏟️ Club Representative
 
- Filter by rating
+Football clubs can use the platform to find players who may be suitable for their teams.
 
- Watch player videos
+The platform can eventually allow clubs to:
 
- Save players
+- Search for players
+- View player profiles
+- Watch videos
+- Save potential players
+- Create recruitment lists
+- Contact coaches
+- Send trial invitations
+- Follow recruitment progress
 
- Contact coaches
+---
 
- Request player trials
+## 🤝 Agent
 
-Club Features:
+Agents can eventually use the platform to discover promising players and connect with them, coaches and clubs.
 
- Search talent
+---
 
- Create recruitment pipeline
+# 🔎 Finding Players
 
- Send trial invitations
+One of the most important parts of Tanzania Talent Scout is player discovery.
 
- View player rankings
+Instead of searching through different social media accounts or depending entirely on personal connections, scouts and clubs can search through player profiles in one place.
 
-Video Features:
+For example, a scout could search for:
 
- Video upload
+```text
+Position: Striker
+Age: 17 to 20
+Location: Arusha
+Rating: 75+
+Preferred foot: Right
+```
+Communication
 
- Video streaming
+The platform also includes interfaces for communication between users.
 
- Highlight reels
+these features include:
 
- Video tagging
+Direct messaging
+Scout inquiries
+Trial invitations
+Club recruitment messages
+Notifications
+Coach and player communication
 
- Match categorization
+Real time messaging will require a backend system.
 
-AI Features:
+🎟️ Trial Opportunities
 
- Analyze uploaded football videos
+Another important part of the platform is helping players get opportunities to attend trials.
 
- Detect player movement
+A possible process would be:
+```text
+Scout discovers player
+        ↓
+Views player profile
+        ↓
+Watches player videos
+        ↓
+Contacts coach
+        ↓
+Requests a trial
+        ↓
+Club reviews player
+        ↓
+Trial invitation
+        ↓
+Player attends trial
+```
+This creates a clear path from discovering a player to giving that player an opportunity.
 
- Calculate speed
+✅ Verification
 
- Measure passing accuracy
+Trust is important when dealing with players, coaches, scouts and clubs.
 
- Analyze shooting efficiency
+The platform therefore includes the idea of verified accounts.
 
- Analyze positioning
-
- Generate strengths and weaknesses
-
- Generate player potential score
-
- Generate scouting reports
-
-Ranking Features:
-
- National player rankings
-
- Regional rankings
-
- Age-group rankings
-
- Position rankings
-
-Communication:
-
- Messaging system
-
- Notifications
-
- Trial invitations
-
-Verification:
-
- Verified coaches
-
- Verified academies
-
- Verified players
-
-Dashboard:
-
- Coach dashboard
-
- Player dashboard
-
- Scout dashboard
-
- Admin dashboard NOWP  I WANT ONLY FRONTEND
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/bc2d0929-026b-45ae-92ea-9a8927e17366).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+verification include:
+```text
+Verified players
+Verified coaches
+Verified academies
+Verified scouts
+Verified clubs
+Verified agents
+Trial invitations
+Club recruitment messages
+Notifications
+Coach and player communication
 ```
