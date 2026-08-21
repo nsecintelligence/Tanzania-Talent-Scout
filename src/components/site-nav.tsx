@@ -6,14 +6,18 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { auditLog } from "@/lib/security";
 
-const links = [
+const publicLinks = [
   { to: "/discover", label: "Discover" },
   { to: "/academies", label: "Academies" },
   { to: "/videos", label: "Videos" },
   { to: "/rankings", label: "Rankings" },
+] as const;
+
+const privateLinks = [
   { to: "/messages", label: "Messages" },
   { to: "/dashboard", label: "Dashboard" },
 ] as const;
+
 
 export function SiteNav() {
   const session = useSession();
