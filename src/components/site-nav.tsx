@@ -51,7 +51,7 @@ export function SiteNav() {
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {links.map((l) => (
+          {[...publicLinks, ...(session ? privateLinks : [])].map((l) => (
             <Link
               key={l.to}
               to={l.to}
