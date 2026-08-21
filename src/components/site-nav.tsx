@@ -70,9 +70,14 @@ export function SiteNav() {
                 <Shield className="h-4 w-4" />
               </Link>
               {session.role === "admin" && (
-                <Link to="/security" className="rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-accent" title="Security dashboard">
-                  Security
-                </Link>
+                <>
+                  <Link to="/admin" className="rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-accent" title="Admin panel">
+                    Admin
+                  </Link>
+                  <Link to="/security" className="rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-accent" title="Security dashboard">
+                    Security
+                  </Link>
+                </>
               )}
               <div className="text-right text-xs leading-tight">
                 <div className="font-medium text-foreground">{session.name}</div>
