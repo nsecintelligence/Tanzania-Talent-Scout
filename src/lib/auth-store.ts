@@ -29,9 +29,16 @@ async function load(user: User | null): Promise<Session> {
   return { user, name, email: user.email ?? "", role };
 }
 
+let ready = false;
+const readyListeners = new Set<(r: boolean) => void>();
+
 function emit(s: Session) {
   current = s;
   listeners.forEach((l) => l(s));
+  if (!ready) {
+    ready = true;
+    readyListeners.forEach((l) => l(true));
+  }
 }
 
 function init() {
@@ -63,3 +70,17 @@ export function useSession(): Session {
   }, []);
   return s;
 }
+
+/** True once the initial session lookup has completed (client-side only). */
+export function useAuthReady(): boolean {
+  const [r, setR] = useState(ready);
+  useEffect(() => {
+    init();
+    setR(ready);
+    const l = (v: boolean) => setR(v);
+    readyListeners.add(l);
+    return () => { readyListeners.delete(l); };
+  }, []);
+  return r;
+}
+
