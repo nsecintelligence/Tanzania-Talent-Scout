@@ -107,11 +107,16 @@ export function SiteNav() {
       {open && (
         <div className="border-t border-border/60 lg:hidden">
           <div className="flex flex-col gap-1 p-4">
-            {links.map((l) => (
+            {[...publicLinks, ...(session ? privateLinks : [])].map((l) => (
               <Link key={l.to} to={l.to} onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm hover:bg-accent">
                 {l.label}
               </Link>
             ))}
+            {session?.role === "admin" && (
+              <Link to="/admin" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm font-medium text-primary hover:bg-accent">
+                Admin panel
+              </Link>
+            )}
             {!session ? (
               <Button className="mt-2" onClick={() => { setOpen(false); nav({ to: "/auth" }); }}>Sign in / Join</Button>
             ) : (
